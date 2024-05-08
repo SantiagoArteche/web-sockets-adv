@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSockets</title>
+  </head>
+  <body>
+    <form method="POST">
+      <input type="text" name="msg" />
+      <button type="submit">Enviar</button>
+    </form>
+
+    <ul id="msgList"></ul>
+  </body>
+
+  <script>
+    const form = document.querySelector("form");
+    const input = document.querySelector("input");
+    const msgList = document.querySelector("#msgList");
+    let socket = null;
+
+    function sendMessage(msg) {
+      if (msg.trim().length <= 0) return;
+      socket?.send(msg);
+    }
+
+    function renderMessage(msg) {
+      if (msg.trim().length <= 0) return;
+
+      const li = document.createElement("li");
+      li.innerHTML = `${msg}`;
+      msgList.prepend(li);
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      sendMessage(input.value);
+      input.value = null;
+    });
+
+    async function connectToSocket() {
+      socket = await new WebSocket("ws://localhost:8080/ws");
+
+      socket.onopen = (e) => {
+        console.log("Connect");
+      };
+
+      socket.onclose = (e) => {
+        console.log("Disconnect");
+        setTimeout(() => {
+          connectToSocket();
+        }, 2000);
+      };
+
+      socket.onmessage = (e) => {
+        renderMessage(e.data);
+      };
+    }
+
+    connectToSocket();
+  </script>
+</html>
