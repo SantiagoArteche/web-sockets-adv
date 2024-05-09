@@ -7,7 +7,7 @@ export class Server {
   private serverListener?: any;
   private readonly PORT: number = +process.env.PORT!;
 
-  constructor(private routes: Router) {
+  constructor() {
     this.configure();
   }
 
@@ -16,13 +16,15 @@ export class Server {
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(express.static("public"));
 
-    this.app.use(this.routes);
-
     this.app.get(/^\/(?!api).*/, (req, res) => {
       const indexPath = path.join(__dirname + `../../../public/index.html`);
 
       res.send(indexPath);
     });
+  }
+
+  public setRoutes(router: Router) {
+    this.app.use(router);
   }
 
   public start() {

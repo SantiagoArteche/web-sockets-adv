@@ -29,13 +29,21 @@ export class WssService {
     WssService._instance = new WssService(options);
   }
 
+  public sendMessage(type: string, payload: Object) {
+    this.wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ type, payload }));
+      }
+    });
+  }
+
   public start() {
     this.wss.on("connection", (ws) => {
       ws.on("error", (error) => console.error(error));
 
       ws.on("message", (data) =>
         this.wss.clients.forEach((client) => {
-          if (ws !== client && client.readyState == WebSocket.OPEN) {
+          if (ws !== client && client.readyState === WebSocket.OPEN) {
             client.send(`${data}`);
           }
         })

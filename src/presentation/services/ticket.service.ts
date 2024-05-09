@@ -1,8 +1,11 @@
 import { Uuid } from "../../config/uuid.adapter";
 import { Ticket } from "../../domain/interfaces/ticket";
+import { WssService } from "./wss.service";
 
 export class TicketService {
-  public readonly tickets: Ticket[] = [
+  constructor(private readonly wssService = WssService.instance) {}
+
+  public tickets: Ticket[] = [
     { id: Uuid(), number: 1, createdAt: new Date(), done: false },
     { id: Uuid(), number: 2, createdAt: new Date(), done: false },
     { id: Uuid(), number: 3, createdAt: new Date(), done: false },
@@ -11,7 +14,7 @@ export class TicketService {
   ];
 
   public get getLastFourTickets(): Ticket[] {
-    return this.workingOnTickets.splice(0, 4);
+    return this.workingOnTickets.slice(0, 4);
   }
 
   private readonly workingOnTickets: Ticket[] = [];
@@ -35,13 +38,11 @@ export class TicketService {
     };
 
     this.tickets.push(newTicket);
-
+    this.onTicketNumberChanged();
     return newTicket;
   }
 
   public drawTicket = (desk: string) => {
-    console.log(desk);
-
     const ticket = this.tickets.find((ticket) => !ticket.handleAtDesk);
     if (!ticket) return { status: "error", message: "No pending tickets" };
 
@@ -49,7 +50,8 @@ export class TicketService {
     ticket.handleAt = new Date();
 
     this.workingOnTickets.unshift({ ...ticket });
-
+    this.onTicketNumberChanged();
+    this.onLastTickets();
     return { status: "ok", ticket };
   };
 
@@ -57,7 +59,7 @@ export class TicketService {
     const ticket = this.tickets.find((ticket) => ticket.id == id);
     if (!ticket) return { status: "error", message: "Ticket not found" };
 
-    this.tickets.map((ticket) => {
+    this.tickets = this.tickets.map((ticket) => {
       if (ticket.id === id) {
         ticket.done = true;
       }
@@ -66,5 +68,16 @@ export class TicketService {
     });
 
     return { status: "ok", message: "Ticket done" };
+  }
+
+  private onTicketNumberChanged() {
+    this.wssService.sendMessage(
+      "on-ticket-count-changed",
+      this.pendingTickets.length
+    );
+  }
+
+  private onLastTickets() {
+    this.wssService.sendMessage("on-working-changed", this.workingOnTickets);
   }
 }

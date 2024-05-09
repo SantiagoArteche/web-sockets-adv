@@ -15,6 +15,7 @@ export class TicketsRoutes {
 
     router.post("/", controller.createTicket);
     router.put("/done/:ticketId", controller.ticketFinished);
+
     return router;
   }
 }

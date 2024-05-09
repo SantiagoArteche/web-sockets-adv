@@ -9,11 +9,12 @@ import { AppRoutes } from "./presentation/routes";
 })();
 
 function main() {
-  const server = new Server(AppRoutes.routes);
+  const server = new Server();
 
   const httpServer = createServer(server.app);
-
   WssService.initWss({ server: httpServer });
+
+  server.setRoutes(AppRoutes.routes);
 
   httpServer.listen(process.env.PORT, () => {
     console.log(`Server running on PORT ${process.env.PORT}`);
